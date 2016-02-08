@@ -35,21 +35,27 @@ Overview
 Demo
 ----
 
-* Boot all necessary services as Docker containers.
-
-* And then iRODS users and objects are created automatically every miniute.
-
-* You can browse Kibana monitoring page on https://DOCKER_SERVER .
+* Execute following commands on your Docker host and you will have iMon environment.
 
 ```bash
 export DOCKER_SERVER="xxx.xxx.xxx.xxx"
 ./demo.sh
 ```
 
+    * Above shell script boots all necessary services including iRODS as Docker containers.
+
+    * And then iRODS users and objects are created automatically every miniute for the demo.
+
+* You can browse Kibana monitoring page on https://DOCKER_SERVER .
+
+    * Go to Discover page and open `rodslog` search.
+
+    * Go to Dashboard page and open `tempZone` dashboard.
+
 Monitoring against existing iRODS
 ----
 
-* Boot containers:
+* Boot containers on your Docker host:
 
 ```bash
 export DOCKER_SERVER="xxx.xxx.xxx.xxx"
@@ -67,7 +73,7 @@ docker run -d --name httpd -p 443:443 -e DOCKER_HOST=${DOCKER_SERVER} --link ela
 
 * Start Flume service with the flume.conf.
 
-* Boot istats container with your iRODS server (replace xxx.xxx.xxx.xxx below) and password (replace xxxxx below):
+* Boot istats container with your iRODS server IP (replace xxx.xxx.xxx.xxx below) and password (replace xxxxx below):
 
 ```bash
 docker run -d --name istats --link flume:flume -e IRODS_PORT_1247_TCP_ADDR=xxx.xxx.xxx.xxx -e IRODS_PASSWORD=xxxxx wtakase/istats
