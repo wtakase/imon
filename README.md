@@ -16,8 +16,6 @@ Overview
 
     * rodsLog dashboard on the Discovery tab.
 
-![iMon rodslog](https://github.com/wtakase/imon/raw/master/images/imon_rodslog.png "iMon rodslog")
-
     * Statistical usage dashbard on the Dashboard tab:
 
         * Number of Objects: per resource, per user
@@ -29,6 +27,8 @@ Overview
         * Number of Errors: per error status
 
         * Number of Users
+
+![iMon rodslog](https://github.com/wtakase/imon/raw/master/images/imon_rodslog.png "iMon rodslog")
 
 ![iMon rodsstats](https://github.com/wtakase/imon/raw/master/images/imon_rodsstats.png "iMon rodsstats")
 
@@ -67,7 +67,7 @@ docker run -d --name httpd -p 443:443 -e DOCKER_HOST=${DOCKER_SERVER} --link ela
 
 * Start Flume service with the flume.conf.
 
-* Boot istats container with your iRODS server and password:
+* Boot istats container with your iRODS server (replace xxx.xxx.xxx.xxx below) and password (replace xxxxx below):
 
 ```bash
 docker run -d --name istats --link flume:flume -e IRODS_PORT_1247_TCP_ADDR=xxx.xxx.xxx.xxx -e IRODS_PASSWORD=xxxxx wtakase/istats
