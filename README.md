@@ -1,7 +1,7 @@
 iMon (iRODS Monitoring framework)
 ====
 
-iRODS monitor framework running on KEF (Kibana, ElasticSearch and Flume).
+iRODS monitor framework running based on EFK (ElasticSearch, Flume, and Kibana).
 
 Overview
 ----
@@ -59,7 +59,7 @@ docker run -d --name kibana -e ELASTICSEARCH_URL=https://${DOCKER_SERVER}/es wta
 docker run -d --name httpd -p 443:443 -e DOCKER_HOST=${DOCKER_SERVER} --link elasticsearch:elasticsearch --link kibana:kibana wtakase/httpd-imon:2.4
 ```
 
-* Install Flume to your iRODS server.
+* Install Flume (flume-ng and flume-ng-agent) to your iRODS server.
 
 * Put docker/icat/flume.conf to /path/to/flume/conf on your iRODS server and replace FLUME_HOST with your Docker hostname.
 
@@ -74,3 +74,8 @@ docker run -d --name istats --link flume:flume -e IRODS_PORT_1247_TCP_ADDR=xxx.x
 ```
 
 * You can browse Kibana monitoring page on https://DOCKER_SERVER .
+
+Dockerfile
+----
+
+* All Docker images are built by using docker/xxx/Dockerfile.
