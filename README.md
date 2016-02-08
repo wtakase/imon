@@ -35,16 +35,16 @@ Overview
 Demo
 ----
 
-* Execute following commands on your Docker host and you will have iMon environment.
+* Execute following commands on your Docker host and you will have iMon environment:
 
 ```bash
 export DOCKER_SERVER="xxx.xxx.xxx.xxx"
 ./demo.sh
 ```
 
-    * Above shell script boots all necessary services including iRODS as Docker containers.
+* Above shell script boots all necessary services including iRODS as Docker containers.
 
-    * And then iRODS users and objects are created automatically every miniute for the demo.
+* And then iRODS users and objects are created automatically every miniute for the demo.
 
 * You can browse Kibana monitoring page on https://DOCKER_SERVER .
 
