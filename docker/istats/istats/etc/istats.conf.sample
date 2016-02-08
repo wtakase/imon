@@ -1,0 +1,16 @@
+[logging]
+level=INFO
+file=/opt/istats/log/istats.log
+
+[flume]
+host=localhost
+port=9000
+chunk_size=500
+interval=1
+
+[irods]
+host=localhost
+port=1247
+user=rods
+password=rods
+zone=tempZone

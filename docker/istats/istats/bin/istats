@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import argparse
+import ConfigParser
+import httplib
+import json
+import logging
+import os
+import re
+import time
+
+import irods
+from irods.models import DataObject
+from irods.models import User
+from irods.session import iRODSSession
+
+LOG = logging.getLogger(__name__)
+TIMESTAMP = int(round(time.time() * 1000))
+
+def get_config():
+    arg_parser = argparse.ArgumentParser(description="iRODS stats collector")
+    arg_parser.add_argument(
+        "-c", "--config", default="/opt/istats/etc/istats.conf",
+        help="[/opt/istats/etc/istats.conf]")
+    args = arg_parser.parse_args()
+
+    conf_parser = ConfigParser.SafeConfigParser()
+    conf_parser.read(args.config)
+    conf = {}
+    conf["logging_level"] = conf_parser.get("logging", "level")
+    conf["logging_file"] = conf_parser.get("logging", "file")
+    if conf["logging_file"].lower() == "none":
+        conf["logging_file"] = None
+    conf["flume_host"] = conf_parser.get("flume", "host")
+    conf["flume_port"] = conf_parser.get("flume", "port")
+    conf["flume_chunk_size"] = int(conf_parser.get("flume", "chunk_size"))
+    conf["flume_interval"] = int(conf_parser.get("flume", "interval"))
+    conf["irods_host"] = conf_parser.get("irods", "host")
+    conf["irods_port"] = conf_parser.get("irods", "port")
+    conf["irods_user"] = conf_parser.get("irods", "user")
+    conf["irods_password"] = conf_parser.get("irods", "password")
+    conf["irods_zone"] = conf_parser.get("irods", "zone")
+    return conf
+
+
+class LoggingNullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+
+def set_logger(level=None, file=None):
+    # NOTE(wtakase): Suppress irods module logging
+    irods.logger.handlers.pop()
+
+    if level is not None:
+        if file is not None:
+            handler = logging.FileHandler(file)
+        else:
+            handler = logging.StreamHandler()
+        LOG.setLevel(getattr(logging, level))
+        handler.setLevel(getattr(logging, level))
+    else:
+        handler = LoggingNullHandler()
+    format = "%(asctime)s %(process)d %(levelname)s %(message)s"
+    handler.setFormatter(logging.Formatter(format))
+    LOG.addHandler(handler)
+
+
+class FlumeHandler(object):
+    def __init__(self, host, port, chunk_size, interval):
+        self.host = host
+        self.port = port
+        self.chunk_size = chunk_size
+        self.interval = interval
+
+    def _list_to_chunks(self, data):
+        for i in xrange(0, len(data), self.chunk_size):
+            yield data[i:i+self.chunk_size]
+
+    def send(self, data=[]):
+        LOG.info("Send %s data to Flume" % len(data))
+        LOG.debug("Flume host: %s:%s" % (self.host, self.port))
+        if len(data) == 0:
+            return
+        try:
+            headers = {"Content-type": "application/json"}
+            for chunk in list(self._list_to_chunks(data)):
+                conn = httplib.HTTPConnection("%s:%s" % (self.host, self.port))
+                conn.request("POST", "/", json.dumps(chunk), headers)
+                conn.close()
+                time.sleep(self.interval)
+        except Exception as e:
+            LOG.error(e)
+
+
+def main():
+    conf = get_config()
+    set_logger(conf["logging_level"], conf["logging_file"])
+
+    LOG.info("Start istats scan")
+
+    irods_client = iRODSSession(host=conf["irods_host"],
+                                port=conf["irods_port"],
+                                user=conf["irods_user"],
+                                password=conf["irods_password"],
+                                zone=conf["irods_zone"])
+    query = irods_client.query(DataObject.owner_name, DataObject.resource_name)
+    results = []
+    for ret in query.count(DataObject.id).sum(DataObject.size).all():
+        result = {
+            "host": conf["irods_host"],
+            "zone": conf["irods_zone"],
+            "object_num": ret[DataObject.id],
+            "object_size": ret[DataObject.size],
+            "object_owner": ret[DataObject.owner_name],
+            "object_resource_name": ret[DataObject.resource_name],
+            "timestamp": TIMESTAMP}
+        results.append({"headers": result, "body": "empty"})
+
+    for ret in irods_client.query().count(User.id).all():
+        result = {
+            "host": conf["irods_host"],
+            "zone": conf["irods_zone"],
+            "user_num": ret[User.id],
+            "timestamp": TIMESTAMP}
+        results.append({"headers": result, "body": "empty"})
+
+    flume_client = FlumeHandler(conf["flume_host"],
+                                conf["flume_port"],
+                                conf["flume_chunk_size"],
+                                conf["flume_interval"])
+    flume_client.send(results)
+
+    LOG.info("End istats scan")
+
+
+if __name__ == '__main__':
+    main()

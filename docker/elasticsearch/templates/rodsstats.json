@@ -1,0 +1,23 @@
+{
+  "rodsstats" : {
+    "template" : "rodsstats-*",
+    "mappings" : {
+      "stats" : {
+        "properties" : {
+          "object_num" : {
+            "type" : "long"
+          },
+          "object_size" : {
+            "type" : "long"
+          },
+          "user_num" : {
+            "type" : "integer"
+          },
+          "timestamp" : {
+            "type" : "date"
+          }
+        }
+      }
+    }
+  }
+}

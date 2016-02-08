@@ -1,0 +1,17 @@
+{
+  "rodslog" : {
+    "template" : "rodslog-*",
+    "mappings" : {
+      "logs" : {
+        "properties" : {
+          "body" : {
+            "type" : "string"
+          },
+          "timestamp": {
+            "type" : "date"
+          }
+        }
+      }
+    }
+  }
+}

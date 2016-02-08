@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import argparse
+import ConfigParser
+import datetime
+import random
+
+from irods.manager.user_manager import UserManager
+from irods.models import User
+from irods.session import iRODSSession
+
+
+def get_config():
+    arg_parser = argparse.ArgumentParser(description="Do iput for demo")
+    arg_parser.add_argument(
+        "-c", "--config", default="/opt/istats/etc/istats.conf",
+        help="[/opt/istats/etc/istats.conf]")
+    args = arg_parser.parse_args()
+
+    conf_parser = ConfigParser.SafeConfigParser()
+    conf_parser.read(args.config)
+    conf = {}
+    conf["irods_host"] = conf_parser.get("irods", "host")
+    conf["irods_port"] = conf_parser.get("irods", "port")
+    conf["irods_user"] = conf_parser.get("irods", "user")
+    conf["irods_password"] = conf_parser.get("irods", "password")
+    conf["irods_zone"] = conf_parser.get("irods", "zone")
+    return conf
+
+
+def create_user(irods_user_manager, zone):
+    if random.randint(1, 100) < 20:
+        try:
+            user = irods_user_manager.create(
+                "test%05d" % random.randint(1, 10000), "rodsuser", zone)
+            print "User created: %s" % user
+        except:
+            pass
+
+
+def put_objects(conf, user):
+    if user == "rodsadmin" or user == "public":
+        return
+    if random.randint(1, 100) < 60:
+        print "Put objects by %s" % user
+        try:
+            irods_client = iRODSSession(host=conf["irods_host"],
+                                        port=conf["irods_port"],
+                                        user=conf["irods_user"],
+                                        password=conf["irods_password"],
+                                        zone=conf["irods_zone"],
+                                        client_user=user)
+            coll_path = "/%s/home/%s/dir%s" % (
+                conf["irods_zone"], user,
+                datetime.datetime.now().strftime("%y%m%d%H%M"))
+            print coll_path
+            coll = irods_client.collections.create(coll_path)
+            for i in range(random.randint(1, 10)):
+                obj = irods_client.data_objects.create("%s/file%06d" % (
+                    coll_path, random.randint(1, 1000000)))
+                with obj.open("w") as f:
+                    f.write(
+                        open("/dev/urandom","rb").read(random.randint(1, 1000)))
+            for obj in coll.data_objects:
+                print obj
+        except:
+            pass
+
+def generate_error(irods_client, zone):
+    if random.randint(1, 100) < 80:
+        coll_path = "/%s/home/rods/hoge" % zone
+        for i in range(random.randint(1, 10)):
+            try:
+                obj = irods_client.data_objects.create("%s/file%06d" % (
+                    coll_path, random.randint(1, 1000000)))
+                with obj.open("w") as f:
+                    f.write(
+                        open("/dev/urandom","rb").read(random.randint(1, 1000)))
+            except:
+                pass
+        try:
+            for obj in coll.data_objects:
+                print obj
+        except:
+            pass
+    
+
+def main():
+    conf = get_config()
+
+    irods_client = iRODSSession(host=conf["irods_host"],
+                                port=conf["irods_port"],
+                                user=conf["irods_user"],
+                                password=conf["irods_password"],
+                                zone=conf["irods_zone"])
+
+    irods_user_manager = UserManager(irods_client)
+    for i in range(random.randint(1, 5)):
+        create_user(irods_user_manager, conf["irods_zone"])
+
+    for ret in irods_client.query(User.name).all():
+        put_objects(conf, ret[User.name])
+
+    for i in range(random.randint(1, 10)):
+        generate_error(irods_client, conf["irods_zone"])
+
+
+if __name__ == '__main__':
+    main()
