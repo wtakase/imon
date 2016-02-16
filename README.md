@@ -65,9 +65,10 @@ docker run -d --name kibana -e ELASTICSEARCH_URL=https://${DOCKER_SERVER}/es wta
 docker run -d --name httpd -p 443:443 -e DOCKER_HOST=${DOCKER_SERVER} --link elasticsearch:elasticsearch --link kibana:kibana wtakase/httpd-imon:2.4
 ```
 
-* Set cron job for iRODS log rotation
+* Exec following shell script and set cron job for iRODS log rotation
 
 ```bash
+/path/to/imon/docker/icat/rotate_rodslog.sh
 echo "*/10 * * * * root /path/to/imon/docker/icat/rotate_rodslog.sh" >> /etc/crontab
 ```
 
