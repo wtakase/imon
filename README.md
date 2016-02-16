@@ -65,9 +65,15 @@ docker run -d --name kibana -e ELASTICSEARCH_URL=https://${DOCKER_SERVER}/es wta
 docker run -d --name httpd -p 443:443 -e DOCKER_HOST=${DOCKER_SERVER} --link elasticsearch:elasticsearch --link kibana:kibana wtakase/httpd-imon:2.4
 ```
 
+* Set cron job for iRODS log rotation
+
+```bash
+echo "*/10 * * * * root /path/to/imon/docker/icat/rotate_rodslog.sh" >> /etc/crontab
+```
+
 * Install Flume (flume-ng and flume-ng-agent) to your iRODS server.
 
-* Put docker/icat/flume.conf to /path/to/flume/conf on your iRODS server and replace FLUME_HOST with your Docker hostname.
+* Put /path/to/imon/docker/icat/flume.conf to /path/to/flume/conf on your iRODS server and replace FLUME_HOST with your Docker hostname.
 
     * Any requests to port 10000 on your Docker host will be redirected to Flume container's port.
 

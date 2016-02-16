@@ -20,3 +20,7 @@ RUN mkdir /opt/flume && \
 COPY flume.conf  /opt/flume/conf/
 COPY run.sh /
 RUN sed -i -e "/^tail.*/i /run.sh &" /opt/irods/bootstrap.sh
+
+RUN apt-get update && apt-get install -y cron
+COPY rotate_rodslog.sh /
+RUN echo "10/* * * * * root /rotate_rodslog.sh" >> /etc/crontab
